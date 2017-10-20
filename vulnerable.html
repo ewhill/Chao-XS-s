@@ -1,0 +1,113 @@
+<html>
+    <head>
+        <title>Very XSS-Vulnerable HTML Page</title>
+        <script>
+            var urlTxt = null;
+            var urlTxt2 = null;
+            var urlTxt3 = null;
+            var qLocation = window.location.href.indexOf("?");
+            
+            if(qLocation > -1) {
+                var params = window.location.href.slice(qLocation+1);
+                var params = params.split("&");
+                
+                for(var i=0; i<params.length; i++) {
+                    var pts = params[i].split("=");
+                    var name = pts[0];
+                    var value = pts[1];
+                    var lastValue = "";
+                    
+                    while(true) {
+                        lastValue = value.slice(0);
+                        value = decodeURIComponent(value).replace(/\+/ig, " ");
+                        if(value == lastValue) break;
+                    }
+                    
+                    // console.log(name, value);
+                    if(name == "txt") urlTxt = value;
+                    else if(name == "txt2") urlTxt2 = value;
+                    else if(name == "txt3") urlTxt3 = value;
+                }
+            }
+            
+            //if(urlTxt && urlTxt.length) alert(urlTxt);
+        </script>
+    </head>
+    <body>
+        <div id="step2" style="display:none;color:red;"></div>
+        <br/>
+        <br/>
+        
+        <div id="step4" style="display:none;color:green;"></div>
+        <br/>
+        <br/>
+        
+        <div id="step6" style="display:none;color:blue;"></div>
+        <br/>
+        <br/>
+        
+        <div id="step1">
+            This page makes text red! Go ahead and give it a try!
+            <form method="get" action="">
+                <input type="text" name="txt" id="txt" value="" placeholder="Enter text here!"/>
+                <input type="submit" name="submitBtn" id="submitBtn" value="Try it!"/>
+            </form>
+        </div>
+        
+        <br/>
+        <br/>
+        
+        <div id="step3">
+            OR try the green version:
+            <form method="get" action="">
+                <input type="text" name="txt2" id="txt2" value="" placeholder="Enter text here!"/>
+                <input type="submit" name="submitBtn2" id="submitBtn2" value="Try it!"/>
+            </form>
+        </div>
+        
+        <br/>
+        <br/>
+        
+        <div id="step5">
+            Or just opt for the blue version:
+            <br/>
+            <input type="text" name="txt3" id="txt3" value="" onkeypress="check(event)" placeholder="Enter text here!"/>
+            <input type="submit" name="submitBtn3" id="submitBtn3" value="Try it!" onclick="doBlue()"/>
+        </div>
+        
+        <script>
+            if(urlTxt && urlTxt.length) {
+                document.getElementById("txt").value = urlTxt;
+                document.getElementById("step2").innerHTML = urlTxt;
+                document.getElementById("step2").style.display = "block";
+                //document.getElementById("step1").style.display = "none";
+            }
+            if(urlTxt2 && urlTxt2.length) {
+                var cleanText = urlTxt2.replace(/<\/?[^>]+(>|$)/g, "");
+                document.getElementById("txt2").value = cleanText;
+                document.getElementById("step4").innerHTML = cleanText;
+                document.getElementById("step4").style.display = "block";
+            }
+            if(urlTxt3 && urlTxt3.length) {
+                document.getElementById("txt3").value = urlTxt3;
+                document.getElementById("step6").innerHTML = urlTxt3;
+                document.getElementById("step6").style.display = "block";
+                //document.getElementById("step1").style.display = "none";
+            }
+            
+            function doBlue() {
+                return check({which:10}, document.getElementById("txt3"))
+            }
+            
+            function check(e) {
+                //console.log(e);
+                if(e.which == 10 || e.which == 13) {
+                    console.log(e.target.value);
+                    if(e.target.value.length > 0) {
+                        window.location.href = "?txt3="+encodeURIComponent(e.target.value);
+                    }
+                }
+            }
+        </script>
+    </body>
+</html>

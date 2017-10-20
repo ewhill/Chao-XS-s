@@ -1,0 +1,44 @@
+<!doctype html>
+<!--
+ This page is shown when the extension button is clicked, because the
+ "browser_action" field in manifest.json contains the "default_popup" key with
+ value "popup.html".
+ -->
+ 
+<html>
+    <head>
+        <title>Chao(XS)s</title>
+        <link rel="stylesheet" type="text/css" href="css/index.css"/>
+        
+        <!--
+        - JavaScript and HTML must be in separate files: see our Content Security
+        - Policy documentation[1] for details and explanation.
+        -
+        - [1]: https://developer.chrome.com/extensions/contentSecurityPolicy
+        -->
+        <script src="lib/saltjs/js/salt.js"></script>
+        <script src="js/index.js"></script>
+    </head>
+    
+    <body>
+        <div id="payloadDiv">
+            <div id="payloadForm" hidden>
+                <input class="text" id="payloadInput" placeholder="<img src=a onerror='alert(1)'/>"/>
+                <br/>
+                <button class="button" id="payloadSubmit">Save Payload</button>
+            </div>
+            <span id="payloadDisplay">
+                <b>Payload</b>
+                <br/>
+                <span id="payloadDisplayValue"></span>
+            </span>
+            <hr/>
+        </div>
+        <div id="findings">
+            <div id='warning' class='warning' hidden></div>
+            <div id='loading' class='loading' hidden></div>
+            <table id="findingsList" width="100%" height="auto">
+            </table>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,19 @@
+{
+    "manifest_version": 2,
+    "name": "Chao(XS)s",
+    "description": "\"It's wabbit huntin' season.\"",
+    "version": "1.0",
+    
+    "web_accessible_resources": ["lib/saltjs/js/salt.js"],
+    
+    "browser_action": {
+        "default_icon": "icon.png",
+        "default_popup": "index.html",
+        "default_title": "Chao(XS)s"
+    },
+    
+    "permissions": [
+        "activeTab",
+        "storage"
+    ]
+}
