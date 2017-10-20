@@ -250,11 +250,10 @@ function chaoXSs(htmlElems, selectors) {
         iframe.onload = function() {
             var innerWin = (iframe.contentWindow || iframe);
             var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
-            console.log("Duplicated iframe (loading for first time):", innerWin.location.href);
+            // console.log("Duplicated iframe (loading for first time):", innerWin.location.href);
             
             iframe.onload = function() {
-                console.log("iFrame loaded (for the second time)", (iframe.contentWindow || iframe).location.href);  
-                
+                // console.log("iFrame loaded (for the second time)", (iframe.contentWindow || iframe).location.href);
                 loadedCount++;
                 
                 var outer = innerDoc.documentElement.outerHTML;
@@ -281,7 +280,7 @@ function chaoXSs(htmlElems, selectors) {
             if(Array.isArray(elem) || elem instanceof HTMLCollection)
                 elem = elem[0];
                 
-            console.log(elem, elemSelector);
+            // console.log(elem, elemSelector);
             
             if(elem) {
                 interact(elem, innerWin, innerDoc);
