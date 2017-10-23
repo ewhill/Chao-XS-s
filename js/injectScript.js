@@ -1,37 +1,5 @@
 // injectScript.js
 
-
-function isElement(obj) {
-  try {
-    //Using W3 DOM2 (works for FF, Opera and Chrom)
-    return obj instanceof HTMLElement;
-  }
-  catch(e){
-    //Browsers not supporting W3 DOM2 don't have HTMLElement and
-    //an exception is thrown and we end up here. Testing some
-    //properties that all elements have. (works on IE7)
-    return (typeof obj==="object") &&
-      (obj.nodeType===1) && (typeof obj.style === "object") &&
-      (typeof obj.ownerDocument ==="object");
-  }
-}
-
-/*! Salt.js DOM Selector Lib. By @james2doyle */
-window.$XSSel = function(selector, context, undefined) {
-  // an object containing the matching keys and native get commands
-  var matches = {
-    '#': 'getElementById',
-    '.': 'getElementsByClassName',
-    '@': 'getElementsByName',
-    '=': 'getElementsByTagName',
-    '*': 'querySelectorAll'
-  }[selector[0]]; // you can treat a string as an array of characters
-  // now pass the selector without the key/first character
-  var el = (((context === undefined) ? document : context)[matches](selector.slice(1)));
-  // if there is one element than return the 0 element
-  return (el ? ((el.length < 2) ? el[0]: el) : []);
-};
-
 /*
 CSS Selector Generator, v1.0.4
 by Riki Fridrich <riki@fczbkk.com> (http://fczbkk.com)
@@ -90,7 +58,7 @@ var loadedCount = 0;
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log(request);
-        
+      
     if(typeof request.payload == "string" && request.payload.length) {
         payload = request.payload;
         sendResponse({status: "ok"});
@@ -132,8 +100,14 @@ function waitForFinish(n) {
     checkFinish();
 }
 
-function succeXSS(location, selector) {
-    console.log("Potential XSS found:", location, selector);
+function succeXSS(location, selector, iframe) {
+    console.log("Potential XSS found:");
+    console.log("\t",{
+        'location': location,
+        'selector': selector,
+        'Element': document.querySelectorAll(selector)
+    });
+    
     chrome.runtime.sendMessage({
         'location': location,
         'selector': selector
@@ -147,7 +121,6 @@ function setIframeValues(iframe, selectors) {
     var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
     for(var selector in selectors) {
         var elem = innerDoc.querySelector(selector);
-        // console.log(elem);
         if(elem) {
             elem.value = payload;
             if(elem.setAttribute && typeof elem.setAttribute == "function") {
@@ -158,7 +131,6 @@ function setIframeValues(iframe, selectors) {
 }
 
 function submitForm(elem) {
-    // console.log("Submitting form:", elem);
     if(typeof elem.submit == "function") {
         elem.submit();
     } else if(elem.submit.click && typeof elem.submit.click == "function") {
@@ -176,14 +148,14 @@ function clickOn(elem) {
     }
 }
 
+// Experimental: some (most) browsers doen't allow simulated keypresses
+// from JavaScript... But, it's worth a try.
 function simulateKeyPress(elem, innerDoc, key) {
     var keyboardEvent = innerDoc.createEvent("KeyboardEvent");
     var initMethod = typeof keyboardEvent.initKeyboardEvent !== 'undefined' ? 
         "initKeyboardEvent" : "initKeyEvent";
     
-    
     keyboardEvent[initMethod]("keypress",true,true,null,false,false,false,false,key,0);
-    
     elem.dispatchEvent(keyboardEvent);
 }
 
@@ -247,29 +219,50 @@ function chaoXSs(htmlElems, selectors) {
         
         var elemSelector = null;
         var times = 0;
+        
         iframe.onload = function() {
             var innerWin = (iframe.contentWindow || iframe);
             var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
-            // console.log("Duplicated iframe (loading for first time):", innerWin.location.href);
+            // console.log("iframe.onload()"); //this fires after "load" event (above)
             
             iframe.onload = function() {
-                // console.log("iFrame loaded (for the second time)", (iframe.contentWindow || iframe).location.href);
+                innerWin = (iframe.contentWindow || iframe);
+                innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+                
                 loadedCount++;
                 
-                var outer = innerDoc.documentElement.outerHTML;
+                var outer = innerDoc.documentElement.outerHTML.slice(0);
                 var location = innerWin.location.href;
                 var loc = outer.indexOf(payload);
                 if(loc < 0) loc = outer.indexOf(payload.replace(/\'/ig, '"'));
                 
                 if(loc > -1) {
-                    // console.log(location);
-                    // remove the iframe and report success
-                    succeXSS(location, elemSelector);
+                    var tempLocation = JSON.stringify((iframe.contentWindow || iframe).location);
+                    
+                    iframe.parentNode.removeChild(iframe);
+                    iframe = newIframeWithContent('<script>console.log("Custom watch script injected.");' +
+                        'var ___props={},___delay=1000,___callback=function(_,r,n){console.warn("window["+_+"] changed from ",r," to ",n,"!")},___stringy=function(_){var r=[];return JSON.stringify(_,function(_,n){if("object"==typeof n&&null!==n){if(-1!==r.indexOf(n))return;r.push(n)}return n})},___addToWatchList=function(_,r){if("string"==typeof _){if(0===_.indexOf("___"))return!1;if("self"==_)return!1;if("frames"==_)return!1;if("window"==_)return!1;if("parent"==_)return!1;if("top"==_)return!1;if("chrome"==_)return!1}if("function"==typeof r)return!1;try{return ___props[_]=___stringy(r),!0}catch(_){return console.error(_.message),!1}};for(var ___i in window)___addToWatchList(___i.toString(),window[___i]);var ___doWatch=function(){for(var _ in window)if(___props.hasOwnProperty(_)){if(___props[_]!==___stringy(window[_])){var r=JSON.parse(___props[_]);___callback(_,r,window[_]),___props[_]=___stringy(window[_])}}else ___addToWatchList(_,window[_])&&___callback(_,null,window[_])};___doWatch();var ___t=setInterval(___doWatch,___delay)</script>' + outer);
+                    (iframe.contentWindow || iframe).history.pushState('', (iframe.contentDocument || iframe.contentWindow.document).title, location);
+                    
+                    var iframeLoadStart = function() {
+                        console.log("iframeLoadStart ('load') event fired " +
+                            "from location.reload() triggered.");
+                    };
+                    
+                    var iframeLoadEnd = function() { // all content is finished loading...
+                        setTimeout(function() {
+                            iframe.parentNode.removeChild(iframe);
+                            succeXSS(location, elemSelector);
+                        }, 10000);
+                    };
+                    
+                    iframe.addEventListener("load", iframeLoadStart, true);
+                    iframe.onload = iframeLoadEnd; //iframe is finished loading...
+                } else {
+                    iframe.parentNode.removeChild(iframe);
                 }
-                iframe.parentNode.removeChild(iframe);
             };
             
-            console.log("iframe values set...");
             //override all values for inputs, forms, etc.
             setIframeValues(iframe, selectors);
             
@@ -279,13 +272,11 @@ function chaoXSs(htmlElems, selectors) {
             
             if(Array.isArray(elem) || elem instanceof HTMLCollection)
                 elem = elem[0];
-                
-            // console.log(elem, elemSelector);
             
             if(elem) {
                 interact(elem, innerWin, innerDoc);
-                times++;
             }
+            times++;
         };
     };
     
@@ -302,9 +293,9 @@ function runChaoXSs(payload) {
     console.warn("Starting Chao(XS)s Scan");
     
     //text | password | checkbox | radio | submit | reset | file | hidden | image | button
-    var documentInputs = $XSSel("=input");
-    var documentForms = $XSSel("=form");
-    var documentButtons = $XSSel("=button");
+    var documentInputs = document.getElementsByTagName("input");
+    var documentForms = document.getElementsByTagName("form");
+    var documentButtons = document.getElementsByTagName("button");
     var allSelectors = {};
     var allElements = [];
     

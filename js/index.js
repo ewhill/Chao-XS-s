@@ -148,6 +148,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     
     getCurrentTabUrl((url) => {
+        
+        chrome.tabs.executeScript({
+            file: "js/watchAll.js",
+            //allFrames: true,
+            runAt: "document_end"
+        });
+        
         chrome.tabs.executeScript({
             file: "js/injectScript.js",
             //allFrames: true,
@@ -168,8 +175,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         
         chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-            console.log(request);
+            //console.log(request);
             
+            // We've found a potential vulnerability...
             if(typeof request.location == "string" && request.location.length && 
                 typeof request.selector == "string" && request.selector.length) {
                     var f = document.createElement("tr");

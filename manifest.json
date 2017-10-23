@@ -4,7 +4,7 @@
     "description": "\"It's wabbit huntin' season.\"",
     "version": "1.0",
     
-    "web_accessible_resources": ["lib/saltjs/js/salt.js"],
+    "web_accessible_resources": [],
     
     "browser_action": {
         "default_icon": "icon.png",

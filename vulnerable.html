@@ -2,10 +2,10 @@
     <head>
         <title>Very XSS-Vulnerable HTML Page</title>
         <script>
-            var urlTxt = null;
-            var urlTxt2 = null;
-            var urlTxt3 = null;
-            var qLocation = window.location.href.indexOf("?");
+            window.urlTxt = null;
+            window.urlTxt2 = null;
+            window.urlTxt3 = null;
+            window.qLocation = window.location.href.indexOf("?");
             
             if(qLocation > -1) {
                 var params = window.location.href.slice(qLocation+1);
