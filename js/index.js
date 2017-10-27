@@ -48,23 +48,6 @@ function getCurrentTabUrl(callback) {
 }
 
 /**
-* Change the background color of the current page.
-*
-* @param {string} color The new background color.
-*/
-function changeBackgroundColor(color) {
-    var script = 'document.body.style.backgroundColor="' + color + '";';
-    // See https://developer.chrome.com/extensions/tabs#method-executeScript.
-    // chrome.tabs.executeScript allows us to programmatically inject JavaScript
-    // into a page. Since we omit the optional first argument "tabId", the script
-    // is inserted into the active tab of the current window, which serves as the
-    // default.
-    chrome.tabs.executeScript({
-        code: script
-    });
-}
-
-/**
 * Gets the saved background color for url.
 *
 * @param {string} url URL whose background color is to be retrieved.
@@ -105,12 +88,12 @@ function savePayload(payload, callback) {
 document.addEventListener('DOMContentLoaded', () => {
     // This code is fired when the user click the extension icon and it's 
     // content is loaded
-    var display = $("#payloadDisplay");
-    var displayValue = $("#payloadDisplayValue");
-    var input = $("#payloadInput");
-    var submit = $("#payloadSubmit");
-    var form = $("#payloadForm");
-    var findingsList = $("#findingsList");
+    var display = document.getElementById("payloadDisplay");
+    var displayValue = document.getElementById("payloadDisplayValue");
+    var input = document.getElementById("payloadInput");
+    var submit = document.getElementById("payloadSubmit");
+    var form = document.getElementById("payloadForm");
+    var findingsList = document.getElementById("findingsList");
     var payload = null;
     
     getSavedPayload((savedPayload) => {
@@ -148,12 +131,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     
     getCurrentTabUrl((url) => {
-        
-        chrome.tabs.executeScript({
-            file: "js/watchAll.js",
-            //allFrames: true,
-            runAt: "document_end"
-        });
         
         chrome.tabs.executeScript({
             file: "js/injectScript.js",
@@ -217,12 +194,4 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
-    
-    /*
-    getCurrentTabUrl((url) => {
-        chrome.tabs.executeScript({
-            code: ""
-        });
-    });
-    */
 });
